@@ -5,10 +5,10 @@
 #include "person.hh"
 #include <algorithm>
 
-class apt
+class Appart
 {
 public:
-   apt(int nb)
+   Appart(int nb)
       : number_(nb)
    {
       listPerson.reserve(6);
@@ -24,6 +24,7 @@ public:
 
       int alim_nb[3] = {0, 0, 0};
       int loisir_nb[3] = {0, 0, 0};
+      unsigned nb_person = listPerson.size();
 
       for (const auto& person: listPerson)
       {
@@ -31,7 +32,7 @@ public:
 
          propre_nb[person.propre - 1]++;
 
-         if ((person.propre == 2) ^ (number_ % 7 != 0))
+         if ((person.propre == 2) ^ (number_ % 10 == 7))
             propre_add++;
 
          alim_nb[person.propre - 1]++;
@@ -39,12 +40,9 @@ public:
       }
 
       sex_balance = std::abs(sex_balance);
-      int propre_cost = std::accumulate(propre_nb, propre_nb + 3, 0)
-         - *std::max_element(propre_nb, propre_nb + 3);
-      int alim_cost = std::accumulate(alim_nb, alim_nb + 3, 0)
-         - *std::max_element(alim_nb, alim_nb + 3);
-      int loisir_cost = std::accumulate(loisir_nb, loisir_nb + 3, 0)
-         - *std::max_element(loisir_nb, loisir_nb + 3);
+      int propre_cost = nb_person - *std::max_element(propre_nb, propre_nb + 3);
+      int alim_cost = nb_person - *std::max_element(alim_nb, alim_nb + 3);
+      int loisir_cost = nb_person - *std::max_element(loisir_nb, loisir_nb + 3);
 
       return sex_balance + propre_cost + propre_add + alim_cost + loisir_cost;
    }

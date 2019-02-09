@@ -3,10 +3,9 @@
 #include <random>
 #include <string>
 #include <vector>
-#include "apt.hh"
+#include "appart.hh"
 #include "person.hh"
 #include <cmath>
-
 
 int rnd(int max)
 {
@@ -22,27 +21,44 @@ int rnd(int max)
    return dist6(rng);
 }
 
+double rnd_double(double max = 1.0)
+{
+   static std::mt19937 rng;
+   static bool init = true;
+   if (init){
+      int seed = std::random_device()();
+      std::cerr << "Seed: " << seed << std::endl;
+      rng.seed(seed);
+      init = false;
+   }
+   std::uniform_real_distribution<> dist(0.0,max);
+   return dist(rng);
+}
 
-std::vector<apt> annealing(std::vector<apt> listApt, float temp=500000, float decay=0.999)
+std::vector<Appart> annealing(std::vector<Appart> listAppart)
 {
    int cost = 0;
-   for (const auto& a: listApt)
+   for (const auto& a: listAppart)
       cost += a.cost();
-   int apt_nb = listApt.size();
+   int appart_nb = listAppart.size();
    int round_blank = 0;
+   float temp = appart_nb * 100;
+   float decay = (float)(appart_nb * 100 - 1) / (appart_nb * 100);
 
-   while (temp > 5 && round_blank < 500)
+   while (temp > 0.00001 && round_blank < 500)
    {
-      int rnd_apt1 = rnd(apt_nb - 1);
-      int rnd_apt2 = rnd(apt_nb - 1);
+      int rnd_appart1 = rnd(appart_nb - 1);
+      int rnd_appart2 = rnd(appart_nb - 1);
       int rnd_person1 = rnd(5);
       int rnd_person2 = rnd(5);
-      int delta_cost = listApt[rnd_apt1].cost()+ listApt[rnd_apt2].cost();
-      std::swap(listApt[rnd_apt1].listPerson[rnd_person1],
-                listApt[rnd_apt2].listPerson[rnd_person2]);
-      delta_cost -= listApt[rnd_apt1].cost()+ listApt[rnd_apt2].cost();
-      double proba = std::exp(- ((float)delta_cost) / temp);
+      int delta_cost = - (listAppart[rnd_appart1].cost()+ listAppart[rnd_appart2].cost());
+      std::swap(listAppart[rnd_appart1].listPerson[rnd_person1],
+                listAppart[rnd_appart2].listPerson[rnd_person2]);
+      delta_cost += listAppart[rnd_appart1].cost() + listAppart[rnd_appart2].cost();
 
+      float proba = std::exp(- ((float)delta_cost * 5) / (temp)) / 2;
+
+      double a_random_double = rnd_double();
       if (delta_cost < 0)
       {
          round_blank = 0;
@@ -50,29 +66,32 @@ std::vector<apt> annealing(std::vector<apt> listApt, float temp=500000, float de
       }
       else
       {
-         std::uniform_real_distribution<double> unif(0, 1);
-         std::default_random_engine re;
-         double a_random_double = unif(re);
 
-         if (a_random_double > proba)
+         if (a_random_double < proba)
          {
             round_blank = 0;
             cost += delta_cost;
+            if (delta_cost > 0)
+               std::cerr << "Temp: " << temp << ", cost: " << cost << ", delta: "
+                         << delta_cost << ", blanks: " << round_blank
+                         <<  ", proba: " << proba << ", rnd: " << a_random_double << std::endl;
          }
          else
          {
             round_blank++;
-            std::swap(listApt[rnd_apt1].listPerson[rnd_person1],
-                      listApt[rnd_apt2].listPerson[rnd_person2]);
+            std::swap(listAppart[rnd_appart1].listPerson[rnd_person1],
+                      listAppart[rnd_appart2].listPerson[rnd_person2]);
 
          }
       }
       temp = temp * decay;
-      std::cerr << "Temp: " << temp << ", cost: " << cost << ", delta: "
-                << delta_cost << ", blanks: " << round_blank << std::endl;
    }
+   cost = 0;
+   for (const auto& a: listAppart)
+      cost += a.cost();
+   std::cerr << "cost: " << cost << ' ' << decay << std::endl;
 
-   return listApt;
+   return listAppart;
 }
 
 int main(int argc, char** argv)
@@ -102,16 +121,16 @@ int main(int argc, char** argv)
       nb++;
    }
 
-   // Fill apt
-   std::vector<apt> listApt(matrix.size() / 6, 0);
-   for (unsigned i = 0; i < listApt.size(); ++i)
-      listApt[i].number_ = i;
+   // Fill appart
+   std::vector<Appart> listAppart(matrix.size() / 6, 0);
+   for (unsigned i = 0; i < listAppart.size(); ++i)
+      listAppart[i].number_ = i;
    for (unsigned i = 0; i < matrix.size(); ++i)
-      listApt[i / 6].listPerson.push_back(matrix[i]);
+      listAppart[i / 6].listPerson.push_back(matrix[i]);
 
 
    // Annealing
-   std::vector<apt> res = annealing(listApt);
+   std::vector<Appart> res = annealing(listAppart);
    for (const auto& appart: res)
    {
       for (int i = 0; i < 5; ++i)
