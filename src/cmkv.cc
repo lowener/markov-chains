@@ -42,10 +42,10 @@ std::vector<Appart> annealing(std::vector<Appart> listAppart)
       cost += a.cost();
    int appart_nb = listAppart.size();
    int round_blank = 0;
-   float temp = appart_nb * 100;
-   float decay = (float)(appart_nb * 100 - 1) / (appart_nb * 100);
+   float temp = appart_nb * 10;
+   float decay = (float)(appart_nb * 1000 - 1) / (appart_nb * 1000);
 
-   while (temp > 0.00001 && round_blank < 500)
+   while (temp > 0.0000001 && round_blank < 500)
    {
       int rnd_appart1 = rnd(appart_nb - 1);
       int rnd_appart2 = rnd(appart_nb - 1);
@@ -56,7 +56,7 @@ std::vector<Appart> annealing(std::vector<Appart> listAppart)
                 listAppart[rnd_appart2].listPerson[rnd_person2]);
       delta_cost += listAppart[rnd_appart1].cost() + listAppart[rnd_appart2].cost();
 
-      float proba = std::exp(- ((float)delta_cost * 5) / (temp)) / 2;
+      float proba = std::exp(- ((float)delta_cost) / (temp));
 
       double a_random_double = rnd_double();
       if (delta_cost < 0)
@@ -71,10 +71,6 @@ std::vector<Appart> annealing(std::vector<Appart> listAppart)
          {
             round_blank = 0;
             cost += delta_cost;
-            if (delta_cost > 0)
-               std::cerr << "Temp: " << temp << ", cost: " << cost << ", delta: "
-                         << delta_cost << ", blanks: " << round_blank
-                         <<  ", proba: " << proba << ", rnd: " << a_random_double << std::endl;
          }
          else
          {
@@ -85,6 +81,10 @@ std::vector<Appart> annealing(std::vector<Appart> listAppart)
          }
       }
       temp = temp * decay;
+/*      std::cerr << "Temp: " << temp << ", cost: " << cost << ", delta: "
+                << delta_cost << ", blanks: " << round_blank
+                <<  ", proba: " << proba
+                << ", rnd: " << a_random_double << std::endl;*/
    }
    cost = 0;
    for (const auto& a: listAppart)
